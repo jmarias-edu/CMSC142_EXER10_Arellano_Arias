@@ -1,5 +1,7 @@
 #include<stdio.h>
 #include<malloc.h>
+#include<stdlib.h>
+
 #define N 10
 #define BALANCED 0
 #define LEFT_LEANING 1
@@ -145,6 +147,94 @@ void insert_value(avl_node **rootptr, int x){
 	insert_fixup(rootptr, temp);
 }
 
+avl_node* search(avl_node **rootptr, int x){
+	avl_node *temp = (*rootptr);
+
+	while(temp!=NULL && temp->x!=x){
+		if(x < temp->x) {
+			temp=temp->left;
+		}
+		else{
+			temp=temp->right;
+		}
+	}
+	return temp;
+}
+
+void delete_fixup(avl_node **rootptr, avl_node){
+
+}
+
+avl_node* minimum(avl_node *node){
+	avl_node *min = node;
+	while(min->left!=NULL && min!=NULL){
+		min=min->left;
+		// printf("searching min: %d\n", min->x);
+	}
+	// printf("Here!\n");
+	return min;
+}
+
+avl_node* findSuccessor(avl_node *node){
+	avl_node* temp = node;
+	if(temp==NULL || temp->right==NULL){
+		return temp;
+	}
+	return( minimum(temp->right) );
+}
+
+void delete_node(avl_node **rootptr, int toRemove){
+	avl_node *toDelete = search(rootptr, toRemove);
+	if(toDelete==NULL){
+		printf("Node does not exist\n");
+		return;
+	}
+	printf("Node exists!\n");
+
+	if(toDelete->left!=NULL && toDelete->right!=NULL){
+		avl_node* successor = findSuccessor(toDelete);
+
+		toDelete->x = successor->x;
+		//deleting successor
+		successor->parent->right = successor->right;
+		successor->right->parent = successor->parent;
+		free(successor);
+		
+
+		//attempt 2
+		// successor->parent->left=NULL;
+		// successor->right = toDelete->right;
+		// successor->left = toDelete->left;
+		// successor->height = toDelete->height;
+		// toDelete->left->parent = successor;
+
+		// if(toDelete==*rootptr){
+		// 	*rootptr = successor;
+		// 	successor->parent = NULL;
+		// }
+		// else{
+		// 	successor->parent = toDelete->parent;
+		// }
+
+		//attempt 1
+		// successor->left = toDelete->left;
+		// if(toDelete==*rootptr){
+		// 	avl_node* newroot = toDelete->right;
+		// 	*rootptr = newroot;
+		// 	newroot->left = toDelete->left;
+		// 	newroot->parent = NULL;
+		// }
+		// else{
+		// 	successor->parent = toDelete->parent;
+		// }
+	}
+
+	else{
+
+	}
+	free(toDelete);
+}
+
 void view(avl_node *root, int tabs){
 	int i;
 	if(root != NULL){
@@ -172,4 +262,8 @@ int main(){
 	insert_value(&root,0);	
 	view(root,0);
 		printf("\n----------------------------------------\n");
+	
+	delete_node(&root, 4);
+	view(root,0);
+	
 }
