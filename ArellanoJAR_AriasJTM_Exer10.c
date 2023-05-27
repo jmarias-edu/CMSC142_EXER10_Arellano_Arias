@@ -185,6 +185,7 @@ avl_node* findSuccessor(avl_node *node){
 
 void delete_node(avl_node **rootptr, int toRemove){
 	avl_node *toDelete = search(rootptr, toRemove);
+	avl_node *child = NULL;
 	if(toDelete==NULL){
 		printf("Node does not exist\n");
 		return;
@@ -193,45 +194,41 @@ void delete_node(avl_node **rootptr, int toRemove){
 
 	if(toDelete->left!=NULL && toDelete->right!=NULL){
 		avl_node* successor = findSuccessor(toDelete);
-
 		toDelete->x = successor->x;
-		//deleting successor
-		successor->parent->right = successor->right;
-		successor->right->parent = successor->parent;
-		free(successor);
-		
-
-		//attempt 2
-		// successor->parent->left=NULL;
-		// successor->right = toDelete->right;
-		// successor->left = toDelete->left;
-		// successor->height = toDelete->height;
-		// toDelete->left->parent = successor;
-
-		// if(toDelete==*rootptr){
-		// 	*rootptr = successor;
-		// 	successor->parent = NULL;
-		// }
-		// else{
-		// 	successor->parent = toDelete->parent;
-		// }
-
-		//attempt 1
-		// successor->left = toDelete->left;
-		// if(toDelete==*rootptr){
-		// 	avl_node* newroot = toDelete->right;
-		// 	*rootptr = newroot;
-		// 	newroot->left = toDelete->left;
-		// 	newroot->parent = NULL;
-		// }
-		// else{
-		// 	successor->parent = toDelete->parent;
-		// }
+		toDelete = successor;
 	}
 
+	
+
+	if(toDelete->right!=NULL){
+		child = toDelete->right;
+	}
+	else if(toDelete->left!=NULL){
+		child = toDelete->left;
+	}
+
+	if(toDelete==*rootptr){
+		*rootptr = child;
+	}
+
+	if(child!=NULL){
+		if(toDelete->parent->right==toDelete){
+			toDelete->parent->right=child;
+		}
+		else if(toDelete->parent->left==toDelete){
+			toDelete->parent->left=child;
+		}
+		child->parent = toDelete->parent;
+	}
 	else{
-
+		if(toDelete->parent->right==toDelete){
+			toDelete->parent->right=NULL;
+		}
+		else if(toDelete->parent->left==toDelete){
+			toDelete->parent->left=NULL;
+		}
 	}
+
 	free(toDelete);
 }
 
@@ -264,6 +261,7 @@ int main(){
 		printf("\n----------------------------------------\n");
 	
 	delete_node(&root, 4);
+
 	view(root,0);
 	
 }
