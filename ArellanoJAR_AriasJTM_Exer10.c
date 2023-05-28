@@ -1,3 +1,11 @@
+/*
+James Alfred R. Arellano - 2020-07542
+Jarem Thimoty M. Arias - 2020-00782
+
+CMSC 142 EF7L
+Exercise 10
+*/
+
 #include<stdio.h>
 #include<malloc.h>
 #include<stdlib.h>
@@ -303,11 +311,6 @@ void view(avl_node *root, int tabs){
 	}
 }
 
-//function that takes in an array to delete multiple nodes
-void deleteNodes(avl_node **rootptr, int intArr[], int n){ 
-	
-}
-
 void swap(int *a, int *b){
 	int temp;
 	temp = *a; *a= *b; *b =temp;
@@ -326,10 +329,10 @@ int main(){
 	view(root,0);
 		printf("\n----------------------------------------\n");
 	
-	int toDelete[] = {5,7,8,9,10};
+	int toDelete[] = {5,7,8,9,10}; //input of values to be deleted
 
-
-	for(int i=0; i<n; i++){
+	//for loop to iterate deletion
+	for(int i=0; i<sizeof(toDelete)/sizeof(toDelete[0]); i++){
 		delete_node(&root, toDelete[i]);
 		view(root, 0);
 	}
