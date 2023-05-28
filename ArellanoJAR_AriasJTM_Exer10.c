@@ -87,14 +87,18 @@ void right_rotate(avl_node **rootptr){
 
 void insert_fixup(avl_node **rootptr, avl_node *temp){
 	int current = BALANCED, previous, lh, rh;
-
+	
 	do{
 
 		lh= (temp->left==NULL?-1:temp->left->height);
 		rh= (temp->right==NULL?-1:temp->right->height);
 
+		
+
 		previous=current;
 		current = (lh==rh?BALANCED:(lh>rh?LEFT_LEANING:RIGHT_LEANING));
+
+		
 
 		if(abs(lh-rh)>1){
 			if(current==LEFT_LEANING){
@@ -161,21 +165,64 @@ avl_node* search(avl_node **rootptr, int x){
 	return temp;
 }
 
-void delete_fixup(avl_node **rootptr, avl_node){
+//slightly modified version of insert_fixup() to avoid null pointers being accessed
+void delete_fixup(avl_node **rootptr, avl_node *temp){ 
+	int current = BALANCED, previous, lh, rh;
+	
+	while(temp!=NULL){
 
+		lh= (temp->left==NULL?-1:temp->left->height);
+		rh= (temp->right==NULL?-1:temp->right->height);
+
+		previous=current;
+		current = (lh==rh?BALANCED:(lh>rh?LEFT_LEANING:RIGHT_LEANING));
+
+		if(abs(lh-rh)>1){
+			// printf("%p\n", temp);
+			
+			if(current==LEFT_LEANING){
+				if(previous==LEFT_LEANING){
+					// printf("right right rotate\n");
+					right_rotate(&temp);
+					
+				}
+				else{
+					// printf("right left rotate\n");
+					right_rotate(&temp);
+					left_rotate(&(temp->left));
+				}
+			}
+			else{
+				if(previous==RIGHT_LEANING){
+					// printf("left left rotate\n");
+					left_rotate(&temp);
+				}
+				else{
+					// printf("left right rotate\n");
+					left_rotate(&temp);
+					right_rotate(&(temp->right));
+				}
+			}
+		}
+		updateheight(temp);
+
+		if(temp->parent==NULL)
+			*rootptr = temp;
+
+		temp =temp->parent;
+
+	};
 }
 
-avl_node* minimum(avl_node *node){
+avl_node* minimum(avl_node *node){ //accessory function to find minimum in a subtree
 	avl_node *min = node;
 	while(min->left!=NULL && min!=NULL){
 		min=min->left;
-		// printf("searching min: %d\n", min->x);
 	}
-	// printf("Here!\n");
 	return min;
 }
 
-avl_node* findSuccessor(avl_node *node){
+avl_node* findSuccessor(avl_node *node){ //finds successor of node
 	avl_node* temp = node;
 	if(temp==NULL || temp->right==NULL){
 		return temp;
@@ -183,23 +230,26 @@ avl_node* findSuccessor(avl_node *node){
 	return( minimum(temp->right) );
 }
 
-void delete_node(avl_node **rootptr, int toRemove){
-	avl_node *toDelete = search(rootptr, toRemove);
+void delete_node(avl_node **rootptr, int toRemove){ //main function for deleting node
+	avl_node *toDelete = search(rootptr, toRemove); //searches for node in tree
 	avl_node *child = NULL;
-	if(toDelete==NULL){
-		printf("Node does not exist\n");
+	if(toDelete==NULL){ //returns if node is not found
 		return;
 	}
-	printf("Node exists!\n");
+	printf("Deleting: %d\n", toRemove);
 
-	if(toDelete->left!=NULL && toDelete->right!=NULL){
-		avl_node* successor = findSuccessor(toDelete);
-		toDelete->x = successor->x;
-		toDelete = successor;
+	//method of deletion below was learned from cmsc 123
+
+	if(toDelete->left!=NULL && toDelete->right!=NULL){ //checks if node has two children
+		avl_node* successor = findSuccessor(toDelete); //finds successor
+		toDelete->x = successor->x; //replaces value of node to be deleted with successor
+		toDelete = successor; //replaces node to be deleted with successor
 	}
 
-	
+	//deleting a node with one or two children
+	//if replaced with successor, successor is guranteed to only have one child at max
 
+	//checks if node has left or right child
 	if(toDelete->right!=NULL){
 		child = toDelete->right;
 	}
@@ -207,20 +257,22 @@ void delete_node(avl_node **rootptr, int toRemove){
 		child = toDelete->left;
 	}
 
-	if(toDelete==*rootptr){
-		*rootptr = child;
-	}
-
+	//code if node has a child
 	if(child!=NULL){
-		if(toDelete->parent->right==toDelete){
+		if(toDelete->parent->right==toDelete){ //code block to replace left/right child of node's parent
 			toDelete->parent->right=child;
 		}
 		else if(toDelete->parent->left==toDelete){
 			toDelete->parent->left=child;
 		}
-		child->parent = toDelete->parent;
+		child->parent = toDelete->parent; //changes child's parent
+
+		updateheight(child); //code block for updating heights
+		if(child->right!=NULL){updateheight(child->right);}
+		if(child->left!=NULL){updateheight(child->left);}
+
 	}
-	else{
+	else{ //code if node has no child
 		if(toDelete->parent->right==toDelete){
 			toDelete->parent->right=NULL;
 		}
@@ -229,7 +281,16 @@ void delete_node(avl_node **rootptr, int toRemove){
 		}
 	}
 
+	//replaces root pointer if node to be deleted 
+	if(toDelete->parent==NULL){
+		*rootptr = child;
+	}
+
+	//frees node
 	free(toDelete);
+	
+	//fixes up tree
+	delete_fixup(rootptr, child);
 }
 
 void view(avl_node *root, int tabs){
@@ -240,6 +301,11 @@ void view(avl_node *root, int tabs){
 		printf("%2i\n", root->x);
 		view(root->left, tabs +1);
 	}
+}
+
+//function that takes in an array to delete multiple nodes
+void deleteNodes(avl_node **rootptr, int intArr[], int n){ 
+	
 }
 
 void swap(int *a, int *b){
@@ -260,8 +326,11 @@ int main(){
 	view(root,0);
 		printf("\n----------------------------------------\n");
 	
-	delete_node(&root, 4);
+	int toDelete[] = {5,7,8,9,10};
 
-	view(root,0);
-	
+
+	for(int i=0; i<n; i++){
+		delete_node(&root, toDelete[i]);
+		view(root, 0);
+	}
 }
